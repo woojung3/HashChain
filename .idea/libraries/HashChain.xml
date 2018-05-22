@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="HashChain">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/out/artifacts/HashChain_jar/HashChain.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
