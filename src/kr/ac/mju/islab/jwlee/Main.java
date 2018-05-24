@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 public class Main {
 
     public static void main(String[] args) throws InterruptedException {
-        boolean useBadSingleton = false;
         ExecutorService executor = Executors.newFixedThreadPool(4);
+        HashChain hc = new HashChain();
 
-        List<Integer> ns = Arrays.asList(100, 200, 300, 1000);
-        List<Integer> cs = Arrays.asList(30, 50, 20, 100);
+        List<Integer> ns = Arrays.asList(100, 200, 300, 1000, 3000, 10000);
+        List<Integer> cs = Arrays.asList(30, 50, 20, 100, 1000, 3000);
         Iterator<Integer> ni = ns.iterator();
         Iterator<Integer> ci = cs.iterator();
 
@@ -24,38 +24,23 @@ public class Main {
 
             // Generate keypair with n and c
             System.out.println(String.format("Generating keypair for n=%s, c=%s", n, c));
-            KeyPair keypair = HashChain.getInstance().keyGen(n, c);
+            KeyPair keypair = hc.keyGen(n, c);
 
             // Generate v_0 to v_n with hashValGen and keypair
             System.out.println("Generating all vs with keypair and hashValGen...");
             List<String> vList = new ArrayList<>();
             for (int i=0; i<=n; i++)
-                vList.add(HashChain.getInstance().hashValGen(n, c, i, keypair.vsMap));
+                vList.add(hc.hashValGen(n, c, i, keypair.vsMap));
 
             System.out.println("Verifying all vs with hashValVeri...");
-            for (int i=1; i<=n; i++)
+            for (int i=Math.max(n-10, 1); i<=n; i++)   // test only v_i of i from max(n-10, 1) to n
             {
-                int f_i = i;
-                executor.submit(() -> {
-                    if (!useBadSingleton)
-                    {
-                        // Correct Verification Check
-                        if (!HashChain.getInstance().hashValVeri(keypair.v0, f_i, vList.get(f_i)))
-                            System.out.println(String.format("CV: Problem occurred with n=%s, c=%s, and v_%s", n, c, f_i));
-                        // Incorrect Verification Check
-                        if (HashChain.getInstance().hashValVeri(keypair.v0, f_i-1, vList.get(f_i)))
-                            System.out.println(String.format("IV: Problem occurred with n=%s, c=%s, and v_%s", n, c, f_i));
-                    }
-                    else
-                    {
-                        // Correct Verification Check
-                        if (!HashChain.getBadInstance().hashValVeri(keypair.v0, f_i, vList.get(f_i)))
-                            System.out.println(String.format("CV: Problem occurred with n=%s, c=%s, and v_%s", n, c, f_i));
-                        // Incorrect Verification Check
-                        if (HashChain.getBadInstance().hashValVeri(keypair.v0, f_i-1, vList.get(f_i)))
-                            System.out.println(String.format("IV: Problem occurred with n=%s, c=%s, and v_%s", n, c, f_i));
-                    }
-                });
+                    // Correct Verification Check
+                    if (!hc.hashValVeri(keypair.v0, i, vList.get(i)))
+                        System.out.println(String.format("CV: Problem occurred with n=%s, c=%s, and v_%s", n, c, i));
+                    // Incorrect Verification Check
+                    if (hc.hashValVeri(keypair.v0, i-1, vList.get(i)))
+                        System.out.println(String.format("IV: Problem occurred with n=%s, c=%s, and v_%s", n, c, i));
             }
             System.out.println("Done");
         }

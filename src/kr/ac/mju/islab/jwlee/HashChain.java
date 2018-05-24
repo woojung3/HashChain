@@ -9,24 +9,6 @@ import java.util.stream.IntStream;
 
 class HashChain {
 
-    // Singleton BEGIN
-    private HashChain() {}
-    private static class Singleton {
-        private static final HashChain instance = new HashChain();
-    }
-
-    static HashChain getInstance() {
-        return Singleton.instance;
-    }
-
-    private static HashChain instance;
-    static synchronized HashChain getBadInstance() {
-        if (instance == null)
-            instance = new HashChain();
-        return instance;
-    }
-    // END
-
     /**
      * Key Generation Function keyGen
      * With input n (hash chain length) and c (# of stored hash values)
@@ -45,21 +27,20 @@ class HashChain {
 
         List<Integer> range = IntStream.rangeClosed(0, c-1).boxed().collect(Collectors.toList());
 
-        // Codes below are not cost-optimized. These are written like this because it is simple and helps understanding. BEGIN
-        List<Integer> indexes = range.stream().map(j -> n - (int)Math.ceil(j*(double)n/c)).collect(Collectors.toList());
-        indexes.add(0);
-        List<String> vsList = range.stream().map(j -> hashN(vn, (int)Math.ceil(j*(double)n/c))).collect(Collectors.toList());
-        vsList.add(rtn.v0);
-
-        Iterator<Integer> i1 = indexes.iterator();
-        Iterator<String> i2 = vsList.iterator();
-
-        Map<Integer, String> map = new LinkedHashMap<>();  // ordered
-        while (i1.hasNext() && i2.hasNext())
-            map.put(i1.next(), i2.next());
-
+        Map<Integer, String> map = new HashMap<>();
+        map.put(n, vn);
+        int prevIdx = n;
+        String prevHash = vn;
+        for (Integer j : range)
+        {
+            int s = n - (int)Math.ceil(j*(double)n/c);
+            String vs = hashN(prevHash, prevIdx - s);
+            map.put(s, vs);
+            prevIdx = s;
+            prevHash = vs;
+        }
+        map.put(0, rtn.v0);
         rtn.vsMap = map;
-        // END
 
         return rtn;
     }
@@ -79,15 +60,6 @@ class HashChain {
     {
         int j = (int)Math.floor((double)(c*(n-i))/n);
         int s = n - (int)Math.ceil(j*(double)n/c);
-
-        // Can find index s via codes below, too
-        // This takes approximately O(n/c). BEGIN
-        /*
-        int s = i;
-        while (!vs.containsKey(s))
-            s++;
-        */
-        // END
 
         return hashN(vs.get(s), s - i);
     }
